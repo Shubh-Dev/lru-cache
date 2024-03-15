@@ -1,18 +1,39 @@
 package main
 
 import (
-    "github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2"
+	"fmt"
+	"lru-cache/cache"
 )
 
 func main() {
-    // Create a new Fiber instance
-    app := fiber.New()
+	// Create a new Fiber instance
+	app := fiber.New()
 
-    // Define routes
-    app.Get("/", func(c *fiber.Ctx) error {
-        return c.SendString("Hello, World!")
-    })
+	// Define routes
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Least Recently Used Cache")
+	})
 
-    // Start the server
-    app.Listen(":3000")
+	app.Get("/cache/get", func(c *fiber.Ctx) error {
+		key := c.Query("key")
+
+		if key ==" " {
+			return c.Status(fiber.StatusBadRequest).SendString("Key is required")
+		}
+
+		value, found := cache.Get(key)
+
+		if !found {
+			return c.Status(fiber.StatusNotFound).SendString("Key not found")
+		}
+		return c.SendString(fmt.Sprintf("Value for key %s is %v", key, value))
+	})
+
+	app.Post("/cache/set", func(c *fiber.Ctx) error {
+		return c.SendString("Set cache")
+	})
+
+	// Start the server
+	app.Listen(":3000")
 }
