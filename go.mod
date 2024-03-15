@@ -1,4 +1,4 @@
-module lru-cache
+module github.com/Shubh-Dev/lru-cache
 
 go 1.22.1
 

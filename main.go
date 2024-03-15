@@ -1,14 +1,17 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"fmt"
-	"lru-cache/cache"
+
+	"github.com/Shubh-Dev/lru-cache/cache"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	// Create a new Fiber instance
 	app := fiber.New()
+	cacheInstance := cache.NewCache(1024)
 
 	// Define routes
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -18,11 +21,11 @@ func main() {
 	app.Get("/cache/get", func(c *fiber.Ctx) error {
 		key := c.Query("key")
 
-		if key ==" " {
+		if key == " " {
 			return c.Status(fiber.StatusBadRequest).SendString("Key is required")
 		}
 
-		value, found := cache.Get(key)
+		value, found := cacheInstance.Get(key)
 
 		if !found {
 			return c.Status(fiber.StatusNotFound).SendString("Key not found")
