@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/Shubh-Dev/lru-cache/cache"
@@ -13,7 +14,7 @@ func main() {
 	app := fiber.New()
 	cacheInstance := cache.NewCache(5)
 	app.Use(func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		c.Set("Access-Control-Allow-Origin", "*")
 		c.Set("Access-Control-Allow-Methods", "GET, POST")
 		c.Set("Access-Control-Allow-Headers", "Content-Type")
 		return c.Next()
@@ -70,6 +71,13 @@ func main() {
 		cacheInstance.Set(requestData.Key, requestData.Value, time.Duration(requestData.Expiration)*time.Second)
 		return c.SendString(fmt.Sprintf("Key %s set successfully", requestData.Key))
 	})
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000" // Default port
+	}
+	// ListenAndServe returns error
+	if err := app.Listen(":" + port); err != nil {
+		fmt.Printf("Error starting server: %v\n", err)
+	}
 
-	app.Listen(":3000")
 }
