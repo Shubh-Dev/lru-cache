@@ -10,15 +10,19 @@ import (
 )
 
 func main() {
-	// Create a new Fiber instance
 	app := fiber.New()
 	cacheInstance := cache.NewCache(5)
-
-	// Define routes
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET, POST")
+		c.Set("Access-Control-Allow-Headers", "Content-Type")
+		return c.Next()
+	})
 	app.Get("/", func(c *fiber.Ctx) error {
+
 		cacheContent := cacheInstance.GetAllCache()
 
-		// Convert the map to a string representation
+		// map to string
 		var cacheString string
 		for key, value := range cacheContent {
 			cacheString += fmt.Sprintf("Key: %s, Value: %v\n", key, value)
@@ -67,6 +71,5 @@ func main() {
 		return c.SendString(fmt.Sprintf("Key %s set successfully", requestData.Key))
 	})
 
-	// Start the server
 	app.Listen(":3000")
 }
