@@ -6,19 +6,18 @@ import (
 	"time"
 
 	"github.com/Shubh-Dev/lru-cache/cache"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
 	app := fiber.New()
 	cacheInstance := cache.NewCache(5)
-	app.Use(func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "*")
-		c.Set("Access-Control-Allow-Methods", "GET, POST")
-		c.Set("Access-Control-Allow-Headers", "Content-Type")
-		return c.Next()
-	})
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
+
 	app.Get("/", func(c *fiber.Ctx) error {
 
 		cacheContent := cacheInstance.GetAllCache()
@@ -33,7 +32,7 @@ func main() {
 			cacheString = "Cache is empty"
 		}
 
-		return c.SendString(cacheString)
+		return c.JSON(cacheContent)
 
 	})
 
