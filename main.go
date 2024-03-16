@@ -13,7 +13,7 @@ func main() {
 	app := fiber.New()
 	cacheInstance := cache.NewCache(5)
 	app.Use(func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Origin", "http://localhost:5173")
 		c.Set("Access-Control-Allow-Methods", "GET, POST")
 		c.Set("Access-Control-Allow-Headers", "Content-Type")
 		return c.Next()
