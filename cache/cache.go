@@ -14,9 +14,10 @@ type Cache struct {
 }
 
 type CacheEntry struct {
-	key       string
-	value     interface{}
-	timestamp time.Time
+	key        string
+	value      interface{}
+	expiration time.Duration
+	timestamp  time.Time
 }
 
 func NewCache(capacity int) *Cache {
@@ -34,15 +35,17 @@ func (c *Cache) Set(key string, value interface{}, expiration time.Duration) {
 	if elem, exists := c.data[key]; exists {
 		entry := elem.Value.(*CacheEntry)
 		entry.value = value
+		entry.expiration = expiration
 		entry.timestamp = time.Now().Add(expiration)
 		c.access.MoveToFront(elem)
 		return
 	}
 
 	entry := &CacheEntry{
-		key:       key,
-		value:     value,
-		timestamp: time.Now().Add(expiration),
+		key:        key,
+		value:      value,
+		expiration: expiration,
+		timestamp:  time.Now(),
 	}
 
 	elem := c.access.PushFront(entry)
@@ -53,19 +56,50 @@ func (c *Cache) Set(key string, value interface{}, expiration time.Duration) {
 	}
 }
 
-func (c *Cache) Get(key string) (interface{}, bool) {
+func (c *Cache) Get(key string) (interface{}, time.Time, bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	if elem, exists := c.data[key]; exists {
 		// Move entry to front of access list (since it was accessed)
 		c.access.MoveToFront(elem)
-		// Return value associated with key
-		return elem.Value.(*CacheEntry).value, true
+		cacheEntry := elem.Value.(*CacheEntry)
+		expirationTime := cacheEntry.timestamp.Add(cacheEntry.expiration)
+		if time.Now().After(expirationTime) {
+			// Entry has expired, remove it from cache
+			c.access.Remove(elem)
+			delete(c.data, key)
+			return nil, expirationTime, false
+		}
+
+		return cacheEntry.value, expirationTime, true
+
 	}
 
 	// Key not found in cache
-	return nil, false
+	return nil, time.Time{}, false
+}
+
+func (c *Cache) GetAllCache() map[string]interface{} {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	cacheContent := make(map[string]interface{})
+	currentTime := time.Now()
+
+	for key, elem := range c.data {
+		cacheEntry := elem.Value.(*CacheEntry)
+		expirationTime := cacheEntry.timestamp.Add(cacheEntry.expiration)
+
+		if currentTime.After(expirationTime) {
+			// Entry has expired, remove it from cache
+			c.access.Remove(elem)
+			delete(c.data, key)
+		} else {
+			cacheContent[key] = elem.Value.(*CacheEntry).value
+		}
+	}
+	return cacheContent
 }
 
 func (c *Cache) evict() {
