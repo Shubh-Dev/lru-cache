@@ -19,19 +19,7 @@ func main() {
 	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
-
 		cacheContent := cacheInstance.GetAllCache()
-
-		// map to string
-		var cacheString string
-		for key, value := range cacheContent {
-			cacheString += fmt.Sprintf("Key: %s, Value: %v\n", key, value)
-		}
-
-		if cacheString == "" {
-			cacheString = "Cache is empty"
-		}
-
 		return c.JSON(cacheContent)
 
 	})
@@ -39,17 +27,28 @@ func main() {
 	app.Get("/cache/get", func(c *fiber.Ctx) error {
 		key := c.Query("key")
 
-		if key == " " {
-			return c.Status(fiber.StatusBadRequest).SendString("Key is required")
+		if key == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Key is required",
+			})
 		}
 
 		value, expirationTime, found := cacheInstance.Get(key)
 
 		if !found {
-			return c.Status(fiber.StatusNotFound).SendString("Key not found")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Key not found",
+			})
 		}
+
 		expirationTimeFormatted := expirationTime.Format("2006-01-02 15:04:05")
-		return c.SendString(fmt.Sprintf("Value for key %s is %v, expires at %s", key, value, expirationTimeFormatted))
+		response := fiber.Map{
+			"key":    key,
+			"value":  value,
+			"expiry": expirationTimeFormatted,
+		}
+
+		return c.JSON(response)
 	})
 
 	app.Post("/cache/set", func(c *fiber.Ctx) error {
@@ -72,9 +71,8 @@ func main() {
 	})
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000" // Default port
+		port = "3000"
 	}
-	// ListenAndServe returns error
 	if err := app.Listen(":" + port); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}

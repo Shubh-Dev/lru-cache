@@ -52,4 +52,6 @@ Give a ⭐️ if you liked this project!
 
 ## 📝 License
 
+<!-- go build -tags netgo -ldflags '-s -w -extldflags "-static"' -o lru-cache -->
+
 
