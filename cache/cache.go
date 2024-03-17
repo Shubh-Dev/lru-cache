@@ -66,7 +66,6 @@ func (c *Cache) Get(key string) (interface{}, time.Time, bool) {
 		cacheEntry := elem.Value.(*CacheEntry)
 		expirationTime := cacheEntry.timestamp.Add(cacheEntry.expiration)
 		if time.Now().After(expirationTime) {
-			// Entry has expired, remove it from cache
 			c.access.Remove(elem)
 			delete(c.data, key)
 			return nil, expirationTime, false
@@ -75,8 +74,6 @@ func (c *Cache) Get(key string) (interface{}, time.Time, bool) {
 		return cacheEntry.value, expirationTime, true
 
 	}
-
-	// Key not found in cache
 	return nil, time.Time{}, false
 }
 
@@ -92,7 +89,6 @@ func (c *Cache) GetAllCache() map[string]interface{} {
 		expirationTime := cacheEntry.timestamp.Add(cacheEntry.expiration)
 
 		if currentTime.After(expirationTime) {
-			// Entry has expired, remove it from cache
 			c.access.Remove(elem)
 			delete(c.data, key)
 		} else {
@@ -104,7 +100,6 @@ func (c *Cache) GetAllCache() map[string]interface{} {
 
 func (c *Cache) evict() {
 	if elem := c.access.Back(); elem != nil {
-		// Remove least recently used entry from access list and data map
 		entry := c.access.Remove(elem).(*CacheEntry)
 		delete(c.data, entry.key)
 	}
